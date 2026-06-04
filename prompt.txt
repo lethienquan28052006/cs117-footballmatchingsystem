@@ -1,0 +1,420 @@
+Bạn là senior frontend engineer. Hãy tạo một webapp demo hoàn chỉnh cho project:
+
+# Football Matching and Scheduling Optimization
+
+## 1. Mục tiêu app
+
+Xây dựng một single-page webapp có thể demo quy trình:
+
+Input teams
+→ Build compatibility graph
+→ Calculate score
+→ Filter edges
+→ Greedy matching
+→ Local search improvement
+→ Assign court/time slot
+→ Evaluation
+→ Final schedule
+
+Webapp dùng để trình bày đồ án Computational Thinking CS117, nên cần trực quan, dễ hiểu, chạy ổn định trên local.
+
+## 2. Tech stack bắt buộc
+
+Use:
+
+* React + Vite
+* JavaScript hoặc TypeScript đều được, ưu tiên TypeScript nếu setup nhanh
+* TailwindCSS
+* Recharts hoặc Chart.js để vẽ biểu đồ
+* Không cần backend
+* Không cần database
+* Dữ liệu lưu trong state hoặc localStorage
+* App phải chạy được bằng:
+
+```bash
+npm install
+npm run dev
+```
+
+## 3. UI theme
+
+Thiết kế theo chủ đề bóng đá:
+
+* Màu chính: blue, yellow, white
+* Có cảm giác dashboard thể thao
+* Layout responsive
+* Các section rõ ràng bằng card
+* Có header lớn: “Football Matching & Scheduling Optimization”
+* Có subtitle: “CS117 Computational Thinking Demo”
+
+## 4. Cấu trúc project mong muốn
+
+Tạo cấu trúc như sau:
+
+```text
+src/
+  data/
+    sampleData.ts
+  algorithms/
+    buildGraph.ts
+    greedyMatching.ts
+    localSearch.ts
+    scheduling.ts
+    metrics.ts
+    scenarioGenerator.ts
+  components/
+    Header.tsx
+    TeamTable.tsx
+    CourtSlotTable.tsx
+    ParameterPanel.tsx
+    EdgeTable.tsx
+    ScheduleTable.tsx
+    MetricsCards.tsx
+    ComparisonChart.tsx
+    ParetoChart.tsx
+    PipelineView.tsx
+  types/
+    index.ts
+  App.tsx
+  main.tsx
+```
+
+Nếu dùng JavaScript thì đổi .ts/.tsx tương ứng.
+
+## 5. Data model
+
+Định nghĩa các type/interface:
+
+```ts
+type Team = {
+  id: string;
+  name: string;
+  skill: number; // 0..10
+  availableSlots: string[];
+  preferredCourts: string[];
+  pay: number;
+};
+
+type CourtSlot = {
+  court: string;
+  time: string;
+  courtFee: number;
+  available: boolean;
+};
+
+type Edge = {
+  teamA: string;
+  teamB: string;
+  commonSlots: string[];
+  skillGap: number;
+  estimatedProfit: number;
+  score: number;
+};
+
+type ScheduledMatch = {
+  teamA: string;
+  teamB: string;
+  court: string;
+  time: string;
+  skillGap: number;
+  score: number;
+  estimatedProfit: number;
+  finalProfit: number;
+};
+```
+
+## 6. Sample data
+
+Tạo sẵn 20 đội bóng mẫu.
+
+Mỗi đội có:
+
+* id: T01, T02, ...
+* name: FC Alpha, FC Beta, ...
+* skill: 0..10
+* availableSlots: ví dụ ["Mon-18:00", "Mon-20:00", "Tue-18:00"]
+* preferredCourts: ví dụ ["Court 1", "Court 2"]
+* pay: 200000..600000 VND
+
+Tạo 3 sân:
+
+* Court 1
+* Court 2
+* Court 3
+
+Tạo các khung giờ:
+
+* Mon-18:00
+* Mon-20:00
+* Tue-18:00
+* Tue-20:00
+* Wed-18:00
+* Wed-20:00
+
+Court fee khoảng 250000..400000.
+
+## 7. Parameters
+
+Có panel cho người dùng chỉnh:
+
+* lambda: hệ số phạt skill gap, default 0.36
+* maxSkillGap: ngưỡng chênh lệch trình độ tối đa, default 3
+* matchingFee: phí dịch vụ ghép trận mỗi đội, default 50000
+* algorithm mode:
+
+  * Greedy only
+  * Greedy + Local Search
+
+Dùng slider hoặc input number.
+
+## 8. Algorithm details
+
+### 8.1 Build graph
+
+Duyệt tất cả cặp đội i, j.
+
+Một cạnh hợp lệ nếu:
+
+```text
+commonSlots.length > 0
+and
+abs(skill_i - skill_j) <= maxSkillGap
+```
+
+Tính:
+
+```text
+estimatedProfit = pay_i + pay_j + 2 * matchingFee
+score = estimatedProfit - lambda * skillGap * 100000
+```
+
+Nếu score > 0 thì thêm edge.
+
+### 8.2 Greedy matching
+
+Sort edges giảm dần theo score.
+
+Chọn edge nếu cả hai team chưa được dùng.
+
+Return matching.
+
+### 8.3 Local search
+
+Triển khai local search đơn giản:
+
+* Input: greedy matching, all edges
+* Thử cải thiện bằng cách thay hai matched edges bằng hai edges khác không trùng team
+* Nếu tổng score tăng thì nhận thay đổi
+* Lặp tối đa 50 iterations hoặc đến khi không cải thiện
+
+Không cần quá tối ưu, nhưng phải chạy ổn định.
+
+### 8.4 Scheduling
+
+Sau khi có matching, gán sân và khung giờ:
+
+* Với mỗi match, tìm courtSlot còn trống có time nằm trong commonSlots
+* Nếu cả hai đội có preferredCourts thì ưu tiên court nằm trong preferredCourts
+* Nếu nhiều slot hợp lệ, chọn slot có courtFee thấp nhất
+* Mỗi court-time chỉ dùng một lần
+* finalProfit = estimatedProfit - courtFee
+
+Nếu không tìm được slot thì bỏ match khỏi schedule.
+
+### 8.5 Metrics
+
+Tính:
+
+```text
+totalProfit = sum(finalProfit)
+avgSkillGap = average(skillGap)
+matchedTeams = schedule.length * 2
+matchRate = matchedTeams / totalTeams
+fillRate = schedule.length / totalAvailableCourtSlots
+runtimeMs = performance.now() difference
+totalMatches = schedule.length
+```
+
+## 9. UI sections
+
+App phải có các section sau:
+
+### 9.1 Header
+
+Hiển thị title, subtitle, mô tả ngắn:
+
+“Optimize football team matchmaking and field scheduling by balancing profit, fairness, and slot utilization.”
+
+### 9.2 PipelineView
+
+Hiển thị pipeline dạng horizontal stepper:
+
+Start → Input → Build Graph → Calculate Score → Filter Edges → Greedy → Local Search → Schedule → Evaluation
+
+Step nào đã chạy thì highlight.
+
+### 9.3 TeamTable
+
+Bảng danh sách đội:
+
+* ID
+* Name
+* Skill
+* Available Slots
+* Preferred Courts
+* Pay
+
+Có nút:
+
+* Generate 20 Teams
+* Generate 50 Teams
+* Reset Sample Data
+
+### 9.4 CourtSlotTable
+
+Hiển thị:
+
+* Court
+* Time
+* Fee
+* Available
+
+### 9.5 ParameterPanel
+
+Cho chỉnh lambda, maxSkillGap, matchingFee, algorithm mode.
+
+Có button lớn:
+
+“Run Optimization”
+
+### 9.6 EdgeTable
+
+Sau khi run, hiển thị top 20 cạnh tương thích:
+
+* Team A
+* Team B
+* Common Slots
+* Skill Gap
+* Estimated Profit
+* Score
+
+### 9.7 ScheduleTable
+
+Hiển thị lịch cuối:
+
+* Match
+* Court
+* Time
+* Skill Gap
+* Score
+* Final Profit
+
+### 9.8 MetricsCards
+
+Cards gồm:
+
+* Total Profit
+* Average Skill Gap
+* Match Rate
+* Fill Rate
+* Runtime
+* Total Matches
+
+Format tiền VND đẹp.
+
+### 9.9 ComparisonChart
+
+So sánh Greedy vs Greedy + Local Search theo:
+
+* Total Profit
+* Average Skill Gap
+* Total Matches
+
+Dùng bar chart.
+
+### 9.10 ParetoChart
+
+Khi người dùng bấm “Generate Pareto Curve”, chạy nhiều giá trị lambda:
+
+```text
+[0, 0.1, 0.2, 0.36, 0.5, 0.75, 1.0]
+```
+
+Với mỗi lambda, chạy pipeline và lấy:
+
+* x = avgSkillGap
+* y = totalProfit
+
+Vẽ scatter/line chart để minh họa trade-off:
+
+lambda nhỏ → lợi nhuận cao hơn nhưng trận lệch hơn
+lambda lớn → cân bằng hơn nhưng lợi nhuận có thể giảm
+
+## 10. Interaction flow
+
+Khi mở app:
+
+* Load sampleData
+* Chưa có kết quả optimization
+
+Khi bấm “Run Optimization”:
+
+1. Build graph
+2. Run greedy
+3. Run local search nếu được chọn
+4. Assign schedule
+5. Calculate metrics
+6. Update tables/charts
+7. Highlight pipeline steps
+
+## 11. Code quality requirements
+
+* Code tách module rõ ràng.
+* Không viết toàn bộ trong App.tsx.
+* Hàm thuật toán phải pure function nếu có thể.
+* Có comment ngắn giải thích từng thuật toán.
+* Không dùng package quá nặng.
+* Không gọi API ngoài.
+* Không cần authentication.
+* Không cần backend.
+* Không cần database.
+
+## 12. Validation / Testing
+
+Sau khi code xong, hãy tự kiểm tra:
+
+* npm install chạy được
+* npm run dev chạy được
+* Không có lỗi TypeScript
+* Không có lỗi console nghiêm trọng
+* Run Optimization tạo ra schedule
+* Metrics hiển thị đúng
+* Thay đổi lambda làm kết quả thay đổi
+* Generate Pareto Curve hoạt động
+* Generate 50 Teams vẫn chạy dưới 5 giây
+
+## 13. Expected final output
+
+Sau khi hoàn thành, hãy trả về:
+
+1. Danh sách file đã tạo/sửa
+2. Cách chạy project
+3. Mô tả ngắn các thuật toán đã implement
+4. Những hạn chế còn lại
+5. Gợi ý bước tiếp theo
+
+## 14. Important scope control
+
+Chỉ tập trung tạo MVP demo chạy được.
+
+Không làm:
+
+* Login
+* Database
+* Backend
+* Upload file
+* Payment
+* Real map
+* Real-time multiplayer
+
+Ưu tiên: chạy ổn định, UI đẹp, thuật toán rõ, demo được trong lớp.
