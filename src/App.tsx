@@ -1,104 +1,114 @@
-import { useMemo, useState } from "react";
-import { buildComparison, generateParetoPoints, runPipeline } from "./algorithms/metrics";
-import { generateTeams } from "./algorithms/scenarioGenerator";
-import { sampleCourtSlots, sampleTeams } from "./data/sampleData";
-import { ComparisonChart } from "./components/ComparisonChart";
+import { useState } from "react";
+import { runPipeline } from "./algorithms/metrics";
+import { generateDataset } from "./algorithms/scenarioGenerator";
+import { sampleDataset } from "./data/sampleData";
+import { CourtInputModal } from "./components/CourtInputModal";
 import { CourtSlotTable } from "./components/CourtSlotTable";
 import { EdgeTable } from "./components/EdgeTable";
+import { FeeInputModal } from "./components/FeeInputModal";
 import { Header } from "./components/Header";
+import { InputConfigPanel } from "./components/InputConfigPanel";
+import { ManualDataPanel } from "./components/ManualDataPanel";
 import { MetricsCards } from "./components/MetricsCards";
 import { ParameterPanel } from "./components/ParameterPanel";
-import { ParetoChart } from "./components/ParetoChart";
-import { PipelineView } from "./components/PipelineView";
 import { ScheduleTable } from "./components/ScheduleTable";
-import { TeamTable } from "./components/TeamTable";
 import { TeamInputModal } from "./components/TeamInputModal";
-import type { ComparisonRow, Edge, Metrics, Parameters, ParetoPoint, ScheduledMatch, Team } from "./types";
+import { TeamTable } from "./components/TeamTable";
+import type { Court, Dataset, Edge, Fee, InputConfig, Metrics, Parameters, ScheduledMatch, Team } from "./types";
 
 const defaultParameters: Parameters = {
   lambda: 0.36,
   maxSkillGap: 3,
   matchingFee: 50000,
-  algorithmMode: "local",
 };
 
-const completedPipeline = ["Start", "Input", "Build Graph", "Calculate Score", "Filter Edges", "Greedy", "Local Search", "Schedule", "Evaluation"];
+const defaultConfig: InputConfig = {
+  teamCount: 20,
+  courtCount: 3,
+  period: "day",
+  scenario: "normal",
+};
 
 export default function App() {
-  const [teams, setTeams] = useState<Team[]>(sampleTeams);
+  const [config, setConfig] = useState<InputConfig>(defaultConfig);
   const [parameters, setParameters] = useState<Parameters>(defaultParameters);
+  const [dataset, setDataset] = useState<Dataset>(sampleDataset);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const [matching, setMatching] = useState<Edge[]>([]);
   const [schedule, setSchedule] = useState<ScheduledMatch[]>([]);
   const [metrics, setMetrics] = useState<Metrics>();
-  const [comparison, setComparison] = useState<ComparisonRow[]>([]);
-  const [pareto, setPareto] = useState<ParetoPoint[]>([]);
-  const [pipelineSteps, setPipelineSteps] = useState<string[]>(["Start", "Input"]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const courtSlots = useMemo(() => sampleCourtSlots, []);
-
-  const runOptimization = () => {
-    const result = runPipeline(teams, courtSlots, parameters);
-    setEdges(result.edges);
-    setSchedule(result.schedule);
-    setMetrics(result.metrics);
-    setComparison(buildComparison(teams, courtSlots, parameters));
-    setPipelineSteps(completedPipeline.filter((step) => parameters.algorithmMode === "local" || step !== "Local Search"));
-  };
-
-  const runPareto = () => {
-    setPareto(generateParetoPoints(teams, courtSlots, parameters));
-  };
-
-  const handleGenerate = (count: number) => {
-    setTeams(generateTeams(count));
-    clearResults();
-  };
-
-  const handleReset = () => {
-    setTeams(sampleTeams);
-    setParameters(defaultParameters);
-    clearResults();
-  };
-
-  const handleAddTeams = (newTeams: Team[]) => {
-    setTeams((prevTeams) => [...prevTeams, ...newTeams]);
-    setIsModalOpen(false);
-    clearResults();
-  };
+  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [isCourtModalOpen, setIsCourtModalOpen] = useState(false);
+  const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
 
   const clearResults = () => {
     setEdges([]);
+    setMatching([]);
     setSchedule([]);
     setMetrics(undefined);
-    setComparison([]);
-    setPareto([]);
-    setPipelineSteps(["Start", "Input"]);
+  };
+
+  const handleGenerate = () => {
+    setDataset(generateDataset(config));
+    clearResults();
+  };
+
+  const handleAddTeam = (team: Team) => {
+    setDataset((current) => ({ ...current, teams: [...current.teams, team] }));
+    clearResults();
+  };
+
+  const handleAddCourt = (court: Court) => {
+    setDataset((current) => ({ ...current, courts: [...current.courts, court] }));
+    clearResults();
+  };
+
+  const handleAddFee = (fee: Fee) => {
+    setDataset((current) => ({
+      ...current,
+      fees: [...current.fees.filter((item) => item.courtId !== fee.courtId || item.slotId !== fee.slotId), fee].sort((a, b) => {
+        const byCourt = a.courtId.localeCompare(b.courtId);
+        return byCourt || a.slotId.localeCompare(b.slotId);
+      }),
+    }));
+    clearResults();
+  };
+
+  const runOptimization = () => {
+    const result = runPipeline(dataset, parameters, true);
+    setEdges(result.edges);
+    setMatching(result.matching);
+    setSchedule(result.schedule);
+    setMetrics(result.metrics);
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f8fc]">
-      <div className="mx-auto grid max-w-7xl gap-5 px-4 py-5 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#f6f7fb]">
+      <div className="mx-auto grid max-w-[1540px] gap-5 px-4 py-5 sm:px-6 lg:px-8">
         <Header />
-        <PipelineView completedSteps={pipelineSteps} />
+        <div className="grid gap-5 xl:grid-cols-[minmax(360px,1fr)_minmax(380px,0.85fr)]">
+          <InputConfigPanel config={config} setConfig={setConfig} parameters={parameters} setParameters={setParameters} onGenerate={handleGenerate} />
+          <ParameterPanel parameters={parameters} setParameters={setParameters} onRun={runOptimization} />
+        </div>
+        <ManualDataPanel onAddTeam={() => setIsTeamModalOpen(true)} onAddCourt={() => setIsCourtModalOpen(true)} onAddFee={() => setIsFeeModalOpen(true)} />
         <MetricsCards metrics={metrics} />
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-          <TeamTable teams={teams} onGenerate={handleGenerate} onReset={handleReset} onOpenInput={() => setIsModalOpen(true)} />
-          <div className="grid content-start gap-5">
-            <ParameterPanel parameters={parameters} setParameters={setParameters} onRun={runOptimization} onPareto={runPareto} />
-            <CourtSlotTable courtSlots={courtSlots} />
-          </div>
+        <TeamTable teams={dataset.teams} courts={dataset.courts} slots={dataset.slots} />
+        <div className="grid gap-5 2xl:grid-cols-[520px_minmax(0,1fr)]">
+          <CourtSlotTable courts={dataset.courts} slots={dataset.slots} fees={dataset.fees} />
+          <EdgeTable edges={matching.length ? matching : edges} courts={dataset.courts} slots={dataset.slots} />
         </div>
-        <div className="grid gap-5 xl:grid-cols-2">
-          <EdgeTable edges={edges} />
-          <ScheduleTable schedule={schedule} />
-        </div>
-        <div className="grid gap-5 xl:grid-cols-2">
-          <ComparisonChart data={comparison} />
-          <ParetoChart data={pareto} />
-        </div>
+        <ScheduleTable schedule={schedule} courts={dataset.courts} slots={dataset.slots} />
       </div>
-      <TeamInputModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddTeams={handleAddTeams} />
+      <TeamInputModal
+        isOpen={isTeamModalOpen}
+        courts={dataset.courts}
+        slots={dataset.slots}
+        existingTeamIds={dataset.teams.map((team) => team.id)}
+        onClose={() => setIsTeamModalOpen(false)}
+        onAddTeam={handleAddTeam}
+      />
+      <CourtInputModal isOpen={isCourtModalOpen} existingCourtIds={dataset.courts.map((court) => court.id)} onClose={() => setIsCourtModalOpen(false)} onAddCourt={handleAddCourt} />
+      <FeeInputModal isOpen={isFeeModalOpen} courts={dataset.courts} slots={dataset.slots} fees={dataset.fees} onClose={() => setIsFeeModalOpen(false)} onAddFee={handleAddFee} />
     </main>
   );
 }

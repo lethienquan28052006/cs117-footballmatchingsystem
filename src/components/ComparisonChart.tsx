@@ -21,8 +21,8 @@ export function ComparisonChart({ data }: Props) {
               <Tooltip formatter={(value, name) => (name === "totalProfit" ? formatVnd(Number(value)) : value)} />
               <Legend />
               <Bar yAxisId="left" dataKey="totalProfit" name="Total Profit" fill="#123c69" radius={[6, 6, 0, 0]} />
-              <Bar yAxisId="right" dataKey="avgSkillGap" name="Avg Skill Gap" fill="#ffd23f" radius={[6, 6, 0, 0]} />
-              <Bar yAxisId="right" dataKey="totalMatches" name="Total Matches" fill="#2f80ed" radius={[6, 6, 0, 0]} />
+              <Bar yAxisId="right" dataKey="totalSkillGap" name="Total Skill Gap" fill="#ffd23f" radius={[6, 6, 0, 0]} />
+              <Bar yAxisId="right" dataKey="matchCount" name="Match Count" fill="#2f80ed" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         ) : (

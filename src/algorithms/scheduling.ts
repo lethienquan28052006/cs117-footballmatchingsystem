@@ -1,34 +1,30 @@
-import type { CourtSlot, Edge, ScheduledMatch, Team } from "../types";
+import type { Edge, Fee, ScheduledMatch } from "../types";
 
-export function assignSchedule(matching: Edge[], teams: Team[], courtSlots: CourtSlot[]): ScheduledMatch[] {
-  const teamById = new Map(teams.map((team) => [team.id, team]));
-  const usedCourtTimes = new Set<string>();
+export function assignSchedule(matching: Edge[], fees: Fee[]): ScheduledMatch[] {
+  const usedCourtSlots = new Set<string>();
   const schedule: ScheduledMatch[] = [];
 
-  // Assign the cheapest feasible court-time, preferring courts liked by both teams.
   for (const match of matching) {
-    const teamA = teamById.get(match.teamA);
-    const teamB = teamById.get(match.teamB);
-    if (!teamA || !teamB) continue;
-
-    const feasible = courtSlots
-      .filter((slot) => slot.available && match.commonSlots.includes(slot.time) && !usedCourtTimes.has(`${slot.court}-${slot.time}`))
-      .sort((a, b) => {
-        const aPreferred = teamA.preferredCourts.includes(a.court) && teamB.preferredCourts.includes(a.court);
-        const bPreferred = teamA.preferredCourts.includes(b.court) && teamB.preferredCourts.includes(b.court);
-        if (aPreferred !== bPreferred) return aPreferred ? -1 : 1;
-        return a.courtFee - b.courtFee;
-      });
+    const feasible = fees
+      .filter((fee) => match.commonCourts.includes(fee.courtId) && match.commonSlots.includes(fee.slotId) && !usedCourtSlots.has(`${fee.courtId}-${fee.slotId}`))
+      .map((fee) => ({
+        fee,
+        profit: match.profit - fee.rentalFee,
+      }))
+      .sort((a, b) => b.profit - a.profit);
 
     const selected = feasible[0];
     if (!selected) continue;
 
-    usedCourtTimes.add(`${selected.court}-${selected.time}`);
+    usedCourtSlots.add(`${selected.fee.courtId}-${selected.fee.slotId}`);
     schedule.push({
-      ...match,
-      court: selected.court,
-      time: selected.time,
-      finalProfit: match.estimatedProfit - selected.courtFee,
+      teamA: match.teamA,
+      teamB: match.teamB,
+      courtId: selected.fee.courtId,
+      slotId: selected.fee.slotId,
+      skillGap: match.skillGap,
+      score: match.score,
+      profit: selected.profit,
     });
   }
 
