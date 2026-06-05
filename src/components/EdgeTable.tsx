@@ -35,7 +35,7 @@ export function EdgeTable({ edges, courts, slots }: Props) {
               <th className="px-4 py-3">Common Slots</th>
               <th className="px-4 py-3">Common Courts</th>
               <th className="px-4 py-3 text-right">Skill Gap</th>
-              <th className="px-4 py-3 text-right">Profit</th>
+              <th className="px-4 py-3 text-right">Estimated Profit</th>
               <th className="px-4 py-3 text-right">Score</th>
             </tr>
           </thead>
@@ -51,7 +51,7 @@ export function EdgeTable({ edges, courts, slots }: Props) {
                   {edge.commonCourts.map((court) => courtName.get(court) ?? court).join(", ")}
                 </td>
                 <td className="px-4 py-3 text-right">{edge.skillGap.toFixed(1)}</td>
-                <td className="px-4 py-3 text-right font-semibold">{formatVnd(edge.profit)}</td>
+                <td className="px-4 py-3 text-right font-semibold">{formatVnd(edge.estimatedProfit)}</td>
                 <td className="px-4 py-3 text-right font-black text-blue-900">{formatVnd(edge.score)}</td>
               </tr>
             ))}

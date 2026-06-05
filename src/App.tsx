@@ -14,7 +14,7 @@ import { ParameterPanel } from "./components/ParameterPanel";
 import { ScheduleTable } from "./components/ScheduleTable";
 import { TeamInputModal } from "./components/TeamInputModal";
 import { TeamTable } from "./components/TeamTable";
-import type { Court, Dataset, Edge, Fee, InputConfig, Metrics, Parameters, ScheduledMatch, Team } from "./types";
+import type { Court, CourtSlot, Dataset, Edge, InputConfig, Metrics, Parameters, ScheduledMatch, Team } from "./types";
 
 const defaultParameters: Parameters = {
   lambda: 0.36,
@@ -58,15 +58,20 @@ export default function App() {
     clearResults();
   };
 
+  const handleAddTeams = (teams: Team[]) => {
+    setDataset((current) => ({ ...current, teams: [...current.teams, ...teams] }));
+    clearResults();
+  };
+
   const handleAddCourt = (court: Court) => {
     setDataset((current) => ({ ...current, courts: [...current.courts, court] }));
     clearResults();
   };
 
-  const handleAddFee = (fee: Fee) => {
+  const handleAddFee = (courtSlot: CourtSlot) => {
     setDataset((current) => ({
       ...current,
-      fees: [...current.fees.filter((item) => item.courtId !== fee.courtId || item.slotId !== fee.slotId), fee].sort((a, b) => {
+      courtSlots: [...current.courtSlots.filter((item) => item.courtId !== courtSlot.courtId || item.slotId !== courtSlot.slotId), courtSlot].sort((a, b) => {
         const byCourt = a.courtId.localeCompare(b.courtId);
         return byCourt || a.slotId.localeCompare(b.slotId);
       }),
@@ -94,7 +99,7 @@ export default function App() {
         <MetricsCards metrics={metrics} />
         <TeamTable teams={dataset.teams} courts={dataset.courts} slots={dataset.slots} />
         <div className="grid gap-5 2xl:grid-cols-[520px_minmax(0,1fr)]">
-          <CourtSlotTable courts={dataset.courts} slots={dataset.slots} fees={dataset.fees} />
+          <CourtSlotTable courtSlots={dataset.courtSlots} />
           <EdgeTable edges={matching.length ? matching : edges} courts={dataset.courts} slots={dataset.slots} />
         </div>
         <ScheduleTable schedule={schedule} courts={dataset.courts} slots={dataset.slots} />
@@ -106,9 +111,10 @@ export default function App() {
         existingTeamIds={dataset.teams.map((team) => team.id)}
         onClose={() => setIsTeamModalOpen(false)}
         onAddTeam={handleAddTeam}
+        onAddTeams={handleAddTeams}
       />
       <CourtInputModal isOpen={isCourtModalOpen} existingCourtIds={dataset.courts.map((court) => court.id)} onClose={() => setIsCourtModalOpen(false)} onAddCourt={handleAddCourt} />
-      <FeeInputModal isOpen={isFeeModalOpen} courts={dataset.courts} slots={dataset.slots} fees={dataset.fees} onClose={() => setIsFeeModalOpen(false)} onAddFee={handleAddFee} />
+      <FeeInputModal isOpen={isFeeModalOpen} courts={dataset.courts} slots={dataset.slots} courtSlots={dataset.courtSlots} onClose={() => setIsFeeModalOpen(false)} onAddFee={handleAddFee} />
     </main>
   );
 }

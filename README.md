@@ -63,10 +63,10 @@ src/
 ## Algorithms
 
 1. Compatibility graph: every team is a vertex. An undirected edge is created when two teams share at least one available slot, share at least one acceptable court, and their skill gap is at most `maxSkillGap`.
-2. Match scoring: each edge computes estimated profit from both teams' willingness to pay, matching fees, and the best estimated operating cost. Score is `profit - lambda * skillGap`.
+2. Match scoring: each edge estimates profit as `max feasible rental fee + matching fee`. Score is `estimatedProfit - lambda * skillGap`.
 3. Greedy matching: feasible edges are sorted by score descending. An edge is selected only when both teams are unused.
 4. Local search: starts from the greedy solution and attempts improving two-edge replacements while preserving the one-match-per-team constraint.
-5. Scheduling: each selected match is assigned exactly one feasible court-slot pair. Used court-slot pairs cannot be reused, and the assignment with highest final profit is chosen.
+5. Scheduling: each selected match is assigned exactly one feasible court-slot pair. Used court-slot pairs cannot be reused, and the available court-slot with the highest rental fee is chosen. Final profit is `rentalFee + matchingFee`.
 6. Evaluation: computes total profit, total skill gap, average skill gap, match rate, court utilization, runtime, and match count.
 
 ## Demo Controls

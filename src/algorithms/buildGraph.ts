@@ -1,6 +1,8 @@
-import type { Edge, Fee, Parameters, Team } from "../types";
+import type { CourtSlot, Edge, Parameters, Team } from "../types";
 
-export function buildGraph(teams: Team[], fees: Fee[], parameters: Parameters): Edge[] {
+export const SKILL_GAP_PENALTY_UNIT = 100000;
+
+export function buildGraph(teams: Team[], courtSlots: CourtSlot[], parameters: Parameters): Edge[] {
   const edges: Edge[] = [];
 
   for (let i = 0; i < teams.length; i += 1) {
@@ -15,17 +17,17 @@ export function buildGraph(teams: Team[], fees: Fee[], parameters: Parameters): 
         continue;
       }
 
-      const feasibleCosts = fees
-        .filter((fee) => commonCourts.includes(fee.courtId) && commonSlots.includes(fee.slotId))
-        .map((fee) => fee.operatingCost);
+      const feasibleRentalFees = courtSlots
+        .filter((courtSlot) => courtSlot.available && commonCourts.includes(courtSlot.courtId) && commonSlots.includes(courtSlot.slotId))
+        .map((courtSlot) => courtSlot.rentalFee);
 
-      if (!feasibleCosts.length) continue;
+      if (!feasibleRentalFees.length) continue;
 
-      const estimatedOperatingCost = Math.min(...feasibleCosts);
-      const profit = teamA.willingnessToPay + teamB.willingnessToPay + 2 * parameters.matchingFee - estimatedOperatingCost;
-      const score = Math.round(profit - parameters.lambda * skillGap * 100000);
+      const estimatedRentalFee = Math.max(...feasibleRentalFees);
+      const estimatedProfit = estimatedRentalFee + parameters.matchingFee;
+      const score = Math.round(estimatedProfit - parameters.lambda * skillGap * SKILL_GAP_PENALTY_UNIT);
 
-      edges.push({ teamA: teamA.id, teamB: teamB.id, commonSlots, commonCourts, skillGap, profit, score });
+      edges.push({ teamA: teamA.id, teamB: teamB.id, commonSlots, commonCourts, skillGap, estimatedProfit, score });
     }
   }
 

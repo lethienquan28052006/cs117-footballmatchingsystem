@@ -1,30 +1,33 @@
-import type { Edge, Fee, ScheduledMatch } from "../types";
+import type { CourtSlot, Edge, Parameters, ScheduledMatch } from "../types";
+import { SKILL_GAP_PENALTY_UNIT } from "./buildGraph";
 
-export function assignSchedule(matching: Edge[], fees: Fee[]): ScheduledMatch[] {
+export function assignSchedule(matching: Edge[], courtSlots: CourtSlot[], parameters: Parameters): ScheduledMatch[] {
   const usedCourtSlots = new Set<string>();
   const schedule: ScheduledMatch[] = [];
 
   for (const match of matching) {
-    const feasible = fees
-      .filter((fee) => match.commonCourts.includes(fee.courtId) && match.commonSlots.includes(fee.slotId) && !usedCourtSlots.has(`${fee.courtId}-${fee.slotId}`))
-      .map((fee) => ({
-        fee,
-        profit: match.profit - fee.rentalFee,
-      }))
-      .sort((a, b) => b.profit - a.profit);
+    const feasible = courtSlots
+      .filter((courtSlot) => courtSlot.available && match.commonCourts.includes(courtSlot.courtId) && match.commonSlots.includes(courtSlot.slotId) && !usedCourtSlots.has(`${courtSlot.courtId}-${courtSlot.slotId}`))
+      .sort((a, b) => b.rentalFee - a.rentalFee);
 
     const selected = feasible[0];
     if (!selected) continue;
 
-    usedCourtSlots.add(`${selected.fee.courtId}-${selected.fee.slotId}`);
+    const profit = selected.rentalFee + parameters.matchingFee;
+
+    usedCourtSlots.add(`${selected.courtId}-${selected.slotId}`);
     schedule.push({
       teamA: match.teamA,
       teamB: match.teamB,
-      courtId: selected.fee.courtId,
-      slotId: selected.fee.slotId,
+      courtId: selected.courtId,
+      courtName: selected.courtName,
+      slotId: selected.slotId,
+      slotLabel: selected.slotLabel,
+      rentalFee: selected.rentalFee,
+      matchingFee: parameters.matchingFee,
       skillGap: match.skillGap,
-      score: match.score,
-      profit: selected.profit,
+      score: Math.round(profit - parameters.lambda * match.skillGap * SKILL_GAP_PENALTY_UNIT),
+      profit,
     });
   }
 

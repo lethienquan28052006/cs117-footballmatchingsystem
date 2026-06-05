@@ -1,4 +1,4 @@
-import { allCourts, buildFees, daySlots, sampleTeams, weekSlots } from "../data/sampleData";
+import { allCourts, buildCourtSlots, daySlots, sampleTeams, weekSlots } from "../data/sampleData";
 import type { Dataset, InputConfig, Parameters, ScenarioName, Team } from "../types";
 
 const names = [
@@ -52,13 +52,13 @@ function pickMany<T>(items: T[], start: number, count: number): T[] {
 export function generateDataset(config: InputConfig): Dataset {
   const courts = allCourts.slice(0, config.courtCount);
   const slots = config.period === "day" ? daySlots : weekSlots;
-  const fees = buildFees(courts, slots);
+  const courtSlots = buildCourtSlots(courts, slots);
 
   if (config.teamCount === 20 && config.courtCount === 3 && config.period === "day" && config.scenario === "normal") {
     return {
       courts,
       slots,
-      fees,
+      courtSlots,
       teams: sampleTeams.map((team) => ({
         ...team,
         availableSlots: [...team.availableSlots],
@@ -76,18 +76,14 @@ export function generateDataset(config: InputConfig): Dataset {
     const courtCount = config.scenario === "limitedAvailability" ? 1 : Math.min(courts.length, index % 4 === 0 ? 1 : 2);
     const slotStart = (index * (config.scenario === "highDemand" ? 1 : 3)) % slots.length;
     const courtStart = index % courts.length;
-    const willingnessBase = config.scenario === "profitOriented" || config.scenario === "highDemand" ? 380000 : 240000;
-    const willingnessRange = config.scenario === "profitOriented" ? 520000 : 360000;
-
     return {
       id,
       name: `FC ${names[index % names.length]} ${index >= names.length ? index + 1 : ""}`.trim(),
       skill,
       availableSlots: pickMany(slots.map((slot) => slot.id), slotStart, slotCount),
       acceptableCourts: pickMany(courts.map((court) => court.id), courtStart, courtCount),
-      willingnessToPay: willingnessBase + ((index * 37000) % willingnessRange),
     };
   });
 
-  return { courts, slots, fees, teams };
+  return { courts, slots, courtSlots, teams };
 }

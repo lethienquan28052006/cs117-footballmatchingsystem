@@ -8,7 +8,7 @@ export function calculateMetrics(schedule: ScheduledMatch[], dataset: Dataset, r
   const totalProfit = schedule.reduce((sum, match) => sum + match.profit, 0);
   const totalSkillGap = schedule.reduce((sum, match) => sum + match.skillGap, 0);
   const matchedTeams = schedule.length * 2;
-  const totalCourtSlots = dataset.courts.length * dataset.slots.length;
+  const totalAvailableCourtSlots = dataset.courtSlots.filter((courtSlot) => courtSlot.available).length;
 
   return {
     totalProfit,
@@ -16,7 +16,7 @@ export function calculateMetrics(schedule: ScheduledMatch[], dataset: Dataset, r
     avgSkillGap: schedule.length ? totalSkillGap / schedule.length : 0,
     matchedTeams,
     matchRate: dataset.teams.length ? matchedTeams / dataset.teams.length : 0,
-    courtUtilization: totalCourtSlots ? schedule.length / totalCourtSlots : 0,
+    courtUtilization: totalAvailableCourtSlots ? schedule.length / totalAvailableCourtSlots : 0,
     runtimeMs,
     totalMatches: schedule.length,
   };
@@ -33,10 +33,10 @@ export function calculateGraphStats(dataset: Dataset, edgesLength: number, match
 
 export function runPipeline(dataset: Dataset, parameters: Parameters, useLocalSearch = true) {
   const startedAt = performance.now();
-  const edges = buildGraph(dataset.teams, dataset.fees, parameters);
+  const edges = buildGraph(dataset.teams, dataset.courtSlots, parameters);
   const greedy = greedyMatching(edges);
   const matching = useLocalSearch ? localSearch(greedy, edges) : greedy;
-  const schedule = assignSchedule(matching, dataset.fees);
+  const schedule = assignSchedule(matching, dataset.courtSlots, parameters);
   const runtimeMs = performance.now() - startedAt;
   const metrics = calculateMetrics(schedule, dataset, runtimeMs);
   const graphStats = calculateGraphStats(dataset, edges.length, matching.length);

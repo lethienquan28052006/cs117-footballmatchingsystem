@@ -14,21 +14,22 @@ export type Team = {
   skill: number;
   availableSlots: string[];
   acceptableCourts: string[];
-  willingnessToPay: number;
 };
 
-export type Fee = {
+export type CourtSlot = {
   courtId: string;
+  courtName: string;
   slotId: string;
+  slotLabel: string;
   rentalFee: number;
-  operatingCost: number;
+  available: boolean;
 };
 
 export type Dataset = {
   courts: Court[];
   slots: TimeSlot[];
   teams: Team[];
-  fees: Fee[];
+  courtSlots: CourtSlot[];
 };
 
 export type Edge = {
@@ -37,7 +38,7 @@ export type Edge = {
   commonSlots: string[];
   commonCourts: string[];
   skillGap: number;
-  profit: number;
+  estimatedProfit: number;
   score: number;
 };
 
@@ -45,7 +46,11 @@ export type ScheduledMatch = {
   teamA: string;
   teamB: string;
   courtId: string;
+  courtName: string;
   slotId: string;
+  slotLabel: string;
+  rentalFee: number;
+  matchingFee: number;
   skillGap: number;
   score: number;
   profit: number;

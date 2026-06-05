@@ -1,17 +1,17 @@
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
-import type { Court, Fee, TimeSlot } from "../types";
+import type { Court, CourtSlot, TimeSlot } from "../types";
 
 type Props = {
   isOpen: boolean;
   courts: Court[];
   slots: TimeSlot[];
-  fees: Fee[];
+  courtSlots: CourtSlot[];
   onClose: () => void;
-  onAddFee: (fee: Fee) => void;
+  onAddFee: (courtSlot: CourtSlot) => void;
 };
 
-export function FeeInputModal({ isOpen, courts, slots, fees, onClose, onAddFee }: Props) {
+export function FeeInputModal({ isOpen, courts, slots, courtSlots, onClose, onAddFee }: Props) {
   const [courtId, setCourtId] = useState("");
   const [slotId, setSlotId] = useState("");
   const [rentalFee, setRentalFee] = useState("300000");
@@ -21,7 +21,9 @@ export function FeeInputModal({ isOpen, courts, slots, fees, onClose, onAddFee }
 
   const effectiveCourtId = courtId || courts[0]?.id || "";
   const effectiveSlotId = slotId || slots[0]?.id || "";
-  const existing = fees.some((fee) => fee.courtId === effectiveCourtId && fee.slotId === effectiveSlotId);
+  const selectedCourt = courts.find((court) => court.id === effectiveCourtId);
+  const selectedSlot = slots.find((slot) => slot.id === effectiveSlotId);
+  const existing = courtSlots.some((courtSlot) => courtSlot.courtId === effectiveCourtId && courtSlot.slotId === effectiveSlotId);
 
   const close = () => {
     setCourtId("");
@@ -43,9 +45,11 @@ export function FeeInputModal({ isOpen, courts, slots, fees, onClose, onAddFee }
     }
     onAddFee({
       courtId: effectiveCourtId,
+      courtName: selectedCourt?.name ?? effectiveCourtId,
       slotId: effectiveSlotId,
+      slotLabel: selectedSlot?.label ?? effectiveSlotId,
       rentalFee: parsedRentalFee,
-      operatingCost: 90000,
+      available: true,
     });
     close();
   };

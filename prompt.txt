@@ -184,8 +184,8 @@ abs(skill_i - skill_j) <= maxSkillGap
 Tính:
 
 ```text
-estimatedProfit = pay_i + pay_j + 2 * matchingFee
-score = estimatedProfit - lambda * skillGap * 100000
+estimatedProfit = maxRentalFee + matchingFee
+score = estimatedProfit - lambda * skillGap
 ```
 
 Nếu score > 0 thì thêm edge.
@@ -262,7 +262,7 @@ Bảng danh sách đội:
 * Skill
 * Available Slots
 * Preferred Courts
-* Pay
+* Acceptable Courts
 
 Có nút:
 
@@ -413,7 +413,7 @@ Không làm:
 * Database
 * Backend
 * Upload file
-* Payment
+* Online transactions
 * Real map
 * Real-time multiplayer
 
