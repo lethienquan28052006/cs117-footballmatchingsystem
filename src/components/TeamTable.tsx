@@ -1,4 +1,4 @@
-import { RefreshCcw, Users } from "lucide-react";
+import { RefreshCcw, Users, Plus } from "lucide-react";
 import type { Team } from "../types";
 import { formatVnd } from "../utils/format";
 
@@ -6,9 +6,10 @@ type Props = {
   teams: Team[];
   onGenerate: (count: number) => void;
   onReset: () => void;
+  onOpenInput: () => void;
 };
 
-export function TeamTable({ teams, onGenerate, onReset }: Props) {
+export function TeamTable({ teams, onGenerate, onReset, onOpenInput }: Props) {
   return (
     <section className="panel overflow-hidden">
       <div className="flex flex-col gap-3 border-b border-blue-100 p-4 md:flex-row md:items-center md:justify-between">
@@ -17,6 +18,9 @@ export function TeamTable({ teams, onGenerate, onReset }: Props) {
           <p className="text-sm text-slate-500">{teams.length} football teams loaded</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-bold text-white hover:bg-green-700" onClick={onOpenInput}>
+            <Plus size={16} /> Add Teams
+          </button>
           <button className="inline-flex items-center gap-2 rounded-lg bg-blue-800 px-3 py-2 text-sm font-bold text-white hover:bg-blue-900" onClick={() => onGenerate(20)}>
             <Users size={16} /> Generate 20 Teams
           </button>

@@ -12,6 +12,7 @@ import { ParetoChart } from "./components/ParetoChart";
 import { PipelineView } from "./components/PipelineView";
 import { ScheduleTable } from "./components/ScheduleTable";
 import { TeamTable } from "./components/TeamTable";
+import { TeamInputModal } from "./components/TeamInputModal";
 import type { ComparisonRow, Edge, Metrics, Parameters, ParetoPoint, ScheduledMatch, Team } from "./types";
 
 const defaultParameters: Parameters = {
@@ -32,6 +33,7 @@ export default function App() {
   const [comparison, setComparison] = useState<ComparisonRow[]>([]);
   const [pareto, setPareto] = useState<ParetoPoint[]>([]);
   const [pipelineSteps, setPipelineSteps] = useState<string[]>(["Start", "Input"]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const courtSlots = useMemo(() => sampleCourtSlots, []);
 
@@ -59,6 +61,12 @@ export default function App() {
     clearResults();
   };
 
+  const handleAddTeams = (newTeams: Team[]) => {
+    setTeams((prevTeams) => [...prevTeams, ...newTeams]);
+    setIsModalOpen(false);
+    clearResults();
+  };
+
   const clearResults = () => {
     setEdges([]);
     setSchedule([]);
@@ -75,7 +83,7 @@ export default function App() {
         <PipelineView completedSteps={pipelineSteps} />
         <MetricsCards metrics={metrics} />
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-          <TeamTable teams={teams} onGenerate={handleGenerate} onReset={handleReset} />
+          <TeamTable teams={teams} onGenerate={handleGenerate} onReset={handleReset} onOpenInput={() => setIsModalOpen(true)} />
           <div className="grid content-start gap-5">
             <ParameterPanel parameters={parameters} setParameters={setParameters} onRun={runOptimization} onPareto={runPareto} />
             <CourtSlotTable courtSlots={courtSlots} />
@@ -90,6 +98,7 @@ export default function App() {
           <ParetoChart data={pareto} />
         </div>
       </div>
+      <TeamInputModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddTeams={handleAddTeams} />
     </main>
   );
 }
