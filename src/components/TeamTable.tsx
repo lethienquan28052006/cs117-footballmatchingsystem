@@ -1,6 +1,4 @@
 import type { Court, Team, TimeSlot } from "../types";
-import { formatVnd } from "../utils/format";
-
 type Props = {
   teams: Team[];
   courts: Court[];
@@ -25,7 +23,6 @@ export function TeamTable({ teams, courts, slots }: Props) {
             <col className="w-[90px]" />
             <col />
             <col className="w-[240px]" />
-            <col className="w-[180px]" />
           </colgroup>
           <thead className="table-head sticky top-0">
             <tr>
@@ -34,7 +31,6 @@ export function TeamTable({ teams, courts, slots }: Props) {
               <th className="px-4 py-3">Skill</th>
               <th className="px-4 py-3">Available Slots</th>
               <th className="px-4 py-3">Acceptable Courts</th>
-              <th className="px-4 py-3 text-right">Willingness to Pay</th>
             </tr>
           </thead>
           <tbody>
@@ -51,7 +47,6 @@ export function TeamTable({ teams, courts, slots }: Props) {
                 <td className="truncate px-4 py-3 text-slate-600" title={team.acceptableCourts.map((court) => courtName.get(court) ?? court).join(", ")}>
                   {team.acceptableCourts.map((court) => courtName.get(court) ?? court).join(", ")}
                 </td>
-                <td className="px-4 py-3 text-right font-semibold">{formatVnd(team.willingnessToPay)}</td>
               </tr>
             ))}
           </tbody>

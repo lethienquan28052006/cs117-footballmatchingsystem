@@ -22,15 +22,13 @@ export function CourtSlotTable({ courts, slots, fees }: Props) {
           <colgroup>
             <col className="w-[120px]" />
             <col className="w-[130px]" />
-            <col className="w-[150px]" />
-            <col className="w-[160px]" />
+            <col />
           </colgroup>
           <thead className="table-head sticky top-0">
             <tr>
               <th className="px-4 py-3">Court</th>
               <th className="px-4 py-3">Time Slot</th>
               <th className="px-4 py-3 text-right">Rental Fee</th>
-              <th className="px-4 py-3 text-right">Operating Cost</th>
             </tr>
           </thead>
           <tbody>
@@ -39,7 +37,6 @@ export function CourtSlotTable({ courts, slots, fees }: Props) {
                 <td className="truncate px-4 py-3 font-semibold" title={courtName.get(fee.courtId) ?? fee.courtId}>{courtName.get(fee.courtId) ?? fee.courtId}</td>
                 <td className="truncate px-4 py-3" title={slotLabel.get(fee.slotId) ?? fee.slotId}>{slotLabel.get(fee.slotId) ?? fee.slotId}</td>
                 <td className="px-4 py-3 text-right font-semibold">{formatVnd(fee.rentalFee)}</td>
-                <td className="px-4 py-3 text-right">{formatVnd(fee.operatingCost)}</td>
               </tr>
             ))}
           </tbody>

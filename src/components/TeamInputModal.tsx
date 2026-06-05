@@ -18,7 +18,6 @@ export function TeamInputModal({ isOpen, courts, slots, existingTeamIds, onClose
     skill: "5.0",
     availableSlots: [] as string[],
     acceptableCourts: [] as string[],
-    willingnessToPay: "450000",
   });
   const [error, setError] = useState("");
 
@@ -31,7 +30,6 @@ export function TeamInputModal({ isOpen, courts, slots, existingTeamIds, onClose
       skill: "5.0",
       availableSlots: [],
       acceptableCourts: [],
-      willingnessToPay: "450000",
     });
     setError("");
   };
@@ -59,7 +57,6 @@ export function TeamInputModal({ isOpen, courts, slots, existingTeamIds, onClose
     const id = formData.id.trim();
     const name = formData.name.trim();
     const skill = Number(formData.skill);
-    const willingnessToPay = Number(formData.willingnessToPay);
 
     if (!id || !name) {
       setError("Team ID and name are required.");
@@ -81,18 +78,13 @@ export function TeamInputModal({ isOpen, courts, slots, existingTeamIds, onClose
       setError("Select at least one acceptable court.");
       return;
     }
-    if (!Number.isFinite(willingnessToPay) || willingnessToPay < 0) {
-      setError("Willingness to pay must be a non-negative number.");
-      return;
-    }
-
     onAddTeam({
       id,
       name,
       skill,
       availableSlots: formData.availableSlots,
       acceptableCourts: formData.acceptableCourts,
-      willingnessToPay,
+      willingnessToPay: 450000,
     });
     reset();
     onClose();
@@ -109,7 +101,7 @@ export function TeamInputModal({ isOpen, courts, slots, existingTeamIds, onClose
         </div>
         <div className="grid gap-4 p-5">
           {error && <div className="rounded-lg bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</div>}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <label className="grid gap-2">
               <span className="text-sm font-semibold text-slate-700">Team ID</span>
               <input className="rounded-lg border border-blue-200 px-3 py-2" value={formData.id} onChange={(event) => setFormData((prev) => ({ ...prev, id: event.target.value }))} placeholder="T021" />
@@ -121,10 +113,6 @@ export function TeamInputModal({ isOpen, courts, slots, existingTeamIds, onClose
             <label className="grid gap-2">
               <span className="text-sm font-semibold text-slate-700">Skill</span>
               <input className="rounded-lg border border-blue-200 px-3 py-2" type="number" min="0" max="10" step="0.1" value={formData.skill} onChange={(event) => setFormData((prev) => ({ ...prev, skill: event.target.value }))} />
-            </label>
-            <label className="grid gap-2">
-              <span className="text-sm font-semibold text-slate-700">Willingness to Pay</span>
-              <input className="rounded-lg border border-blue-200 px-3 py-2" type="number" min="0" step="10000" value={formData.willingnessToPay} onChange={(event) => setFormData((prev) => ({ ...prev, willingnessToPay: event.target.value }))} />
             </label>
           </div>
           <div>

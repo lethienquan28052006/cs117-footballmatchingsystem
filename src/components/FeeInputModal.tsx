@@ -15,7 +15,6 @@ export function FeeInputModal({ isOpen, courts, slots, fees, onClose, onAddFee }
   const [courtId, setCourtId] = useState("");
   const [slotId, setSlotId] = useState("");
   const [rentalFee, setRentalFee] = useState("300000");
-  const [operatingCost, setOperatingCost] = useState("90000");
   const [error, setError] = useState("");
 
   if (!isOpen) return null;
@@ -28,27 +27,25 @@ export function FeeInputModal({ isOpen, courts, slots, fees, onClose, onAddFee }
     setCourtId("");
     setSlotId("");
     setRentalFee("300000");
-    setOperatingCost("90000");
     setError("");
     onClose();
   };
 
   const submit = () => {
     const parsedRentalFee = Number(rentalFee);
-    const parsedOperatingCost = Number(operatingCost);
     if (!effectiveCourtId || !effectiveSlotId) {
       setError("A court and time slot are required.");
       return;
     }
-    if (!Number.isFinite(parsedRentalFee) || parsedRentalFee < 0 || !Number.isFinite(parsedOperatingCost) || parsedOperatingCost < 0) {
-      setError("Fees must be non-negative numbers.");
+    if (!Number.isFinite(parsedRentalFee) || parsedRentalFee < 0) {
+      setError("Rental fee must be a non-negative number.");
       return;
     }
     onAddFee({
       courtId: effectiveCourtId,
       slotId: effectiveSlotId,
       rentalFee: parsedRentalFee,
-      operatingCost: parsedOperatingCost,
+      operatingCost: 90000,
     });
     close();
   };
@@ -89,13 +86,9 @@ export function FeeInputModal({ isOpen, courts, slots, fees, onClose, onAddFee }
                 ))}
               </select>
             </label>
-            <label className="grid gap-2">
+            <label className="grid gap-2 sm:col-span-2">
               <span className="text-sm font-semibold text-slate-700">Rental Fee</span>
               <input className="rounded-lg border border-blue-200 px-3 py-2" type="number" min="0" step="10000" value={rentalFee} onChange={(event) => setRentalFee(event.target.value)} />
-            </label>
-            <label className="grid gap-2">
-              <span className="text-sm font-semibold text-slate-700">Operating Cost</span>
-              <input className="rounded-lg border border-blue-200 px-3 py-2" type="number" min="0" step="10000" value={operatingCost} onChange={(event) => setOperatingCost(event.target.value)} />
             </label>
           </div>
           <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-800 px-4 py-3 font-black text-white hover:bg-blue-900" onClick={submit}>
