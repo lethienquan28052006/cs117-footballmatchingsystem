@@ -2,13 +2,19 @@ import { buildGraph } from "./buildGraph";
 import { greedyMatching } from "./greedyMatching";
 import { localSearch } from "./localSearch";
 import { assignSchedule } from "./scheduling";
+import { validateTeams } from "./validate";
 import type { ComparisonRow, Dataset, GraphStats, Metrics, Parameters, ParetoPoint, ScheduledMatch } from "../types";
+
+/**
+ * SP5 — System Evaluation
+ * Compute KPIs: TotalProfit, AvgSkillGap, MatchRate, CourtUtilization, Runtime, TotalMatches
+ */
 
 export function calculateMetrics(schedule: ScheduledMatch[], dataset: Dataset, runtimeMs: number): Metrics {
   const totalProfit = schedule.reduce((sum, match) => sum + match.profit, 0);
   const totalSkillGap = schedule.reduce((sum, match) => sum + match.skillGap, 0);
   const matchedTeams = schedule.length * 2;
-  const totalAvailableCourtSlots = dataset.courtSlots.filter((courtSlot) => courtSlot.available).length;
+  const totalAvailableCourtSlots = dataset.courtSlots.filter((cs) => cs.available).length;
 
   return {
     totalProfit,
@@ -31,12 +37,26 @@ export function calculateGraphStats(dataset: Dataset, edgesLength: number, match
   };
 }
 
+/**
+ * Full optimization pipeline: SP1 → SP5
+ */
 export function runPipeline(dataset: Dataset, parameters: Parameters, useLocalSearch = true) {
   const startedAt = performance.now();
-  const edges = buildGraph(dataset.teams, dataset.courtSlots, parameters);
+
+  // SP1 — Data Preprocessing
+  const { valid: validatedTeams } = validateTeams(dataset.teams);
+
+  // SP2 — Build Compatibility Graph
+  const edges = buildGraph(validatedTeams, dataset.courtSlots, parameters);
+
+  // SP3 — Optimization / Matching
   const greedy = greedyMatching(edges);
   const matching = useLocalSearch ? localSearch(greedy, edges) : greedy;
+
+  // SP4 — Court & Slot Assignment
   const schedule = assignSchedule(matching, dataset.courtSlots, parameters);
+
+  // SP5 — System Evaluation
   const runtimeMs = performance.now() - startedAt;
   const metrics = calculateMetrics(schedule, dataset, runtimeMs);
   const graphStats = calculateGraphStats(dataset, edges.length, matching.length);

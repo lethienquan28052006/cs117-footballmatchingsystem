@@ -22,6 +22,7 @@ export type CourtSlot = {
   slotId: string;
   slotLabel: string;
   rentalFee: number;
+  operatingCost: number;  // Operating cost; netProfit = rentalFee - operatingCost
   available: boolean;
 };
 

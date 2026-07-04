@@ -24,8 +24,19 @@ export function buildCourtSlots(courts: Court[], slots: TimeSlot[]): CourtSlot[]
       const isPeak = slot.label.includes("18:00") || slot.label.includes("20:00");
       const weekend = slot.label.startsWith("Sat") || slot.label.startsWith("Sun");
       const rentalFee = 220000 + courtIndex * 35000 + (isPeak ? 80000 : 25000) + (weekend ? 50000 : 0);
+      
+      // Operating cost: 35–40% of rentalFee to keep net profit positive
+      const operatingCost = Math.round(rentalFee * 0.35);
 
-      return { courtId: court.id, courtName: court.name, slotId: slot.id, slotLabel: slot.label, rentalFee, available: true };
+      return { 
+        courtId: court.id, 
+        courtName: court.name, 
+        slotId: slot.id, 
+        slotLabel: slot.label, 
+        rentalFee, 
+        operatingCost,
+        available: true 
+      };
     }),
   );
 }

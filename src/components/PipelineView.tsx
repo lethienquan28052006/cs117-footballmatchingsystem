@@ -1,30 +1,57 @@
 import { CheckCircle2, Circle } from "lucide-react";
 
-const steps = ["Input", "Graph", "Score", "Filter", "Matching", "Scheduling", "Evaluation", "Visualization"];
+type PipelineStep = "SP1" | "SP2" | "SP3" | "SP4" | "SP5";
 
 type Props = {
-  completedSteps: string[];
+  activeStep: PipelineStep | null;
+  completedSteps: Set<PipelineStep>;
 };
 
-export function PipelineView({ completedSteps }: Props) {
-  const completed = new Set(completedSteps);
+const stepLabels: Record<PipelineStep, string> = {
+  SP1: "Data Prep",
+  SP2: "Build Graph",
+  SP3: "Optimization",
+  SP4: "Assignment",
+  SP5: "Evaluation",
+};
+
+export function PipelineView({ activeStep, completedSteps }: Props) {
+  const steps: PipelineStep[] = ["SP1", "SP2", "SP3", "SP4", "SP5"];
 
   return (
-    <section className="panel p-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-bold text-blue-950">Pipeline Visualization</h2>
-        <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">{completedSteps.length > 1 ? "Executed" : "Ready"}</span>
+    <section className="panel p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Optimization Pipeline (SP1–SP5)</h2>
+        {activeStep && <span className="text-xs font-semibold text-blue-700 animate-pulse">Running...</span>}
       </div>
-      <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2">
+      
+      <div className="flex items-center justify-between gap-1 overflow-x-auto md:gap-3">
         {steps.map((step, index) => {
-          const isDone = completed.has(step);
+          const isActive = step === activeStep;
+          const isCompleted = completedSteps.has(step);
+
           return (
-            <div key={step} className={`min-w-0 rounded-lg border p-3 ${isDone ? "border-amber-300 bg-amber-50 text-blue-950" : "border-blue-100 bg-white text-slate-500"}`}>
-              <div className="flex items-center gap-2">
-                {isDone ? <CheckCircle2 size={17} className="text-emerald-700" /> : <Circle size={17} />}
-                <span className="text-xs font-bold">{index + 1}</span>
+            <div key={step} className="flex flex-col items-center gap-2 min-w-max">
+              <div className="flex items-center gap-1">
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-full font-bold text-sm transition-all ${
+                    isActive
+                      ? "animate-pulse bg-blue-600 text-white shadow-lg scale-110"
+                      : isCompleted
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-slate-100 text-slate-400"
+                  }`}
+                >
+                  {isCompleted ? <CheckCircle2 size={22} /> : <Circle size={18} />}
+                </div>
+                {index < steps.length - 1 && (
+                  <div className={`h-0.5 w-4 md:w-6 transition-colors ${isCompleted || isActive ? "bg-emerald-300" : "bg-slate-200"}`} />
+                )}
               </div>
-              <div className="mt-2 truncate text-sm font-semibold" title={step}>{step}</div>
+              <div className="text-center">
+                <p className="text-xs font-bold text-slate-800">{step}</p>
+                <p className="text-xs text-slate-500">{stepLabels[step]}</p>
+              </div>
             </div>
           );
         })}

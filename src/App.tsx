@@ -15,7 +15,11 @@ import { ScheduleTable } from "./components/ScheduleTable";
 import { SlotInputModal } from "./components/SlotInputModal";
 import { TeamInputModal } from "./components/TeamInputModal";
 import { TeamTable } from "./components/TeamTable";
+import { OnboardingBanner } from "./components/OnboardingBanner";
+import { PipelineView } from "./components/PipelineView";
 import type { Court, CourtSlot, Dataset, Edge, InputConfig, Metrics, Parameters, ScheduledMatch, Team, TimeSlot } from "./types";
+
+type PipelineStep = "SP1" | "SP2" | "SP3" | "SP4" | "SP5" | null;
 
 const defaultParameters: Parameters = {
   lambda: 0.36,
@@ -42,6 +46,8 @@ export default function App() {
   const [isCourtModalOpen, setIsCourtModalOpen] = useState(false);
   const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
   const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState<PipelineStep>(null);
+  const [completedSteps, setCompletedSteps] = useState<Set<"SP1" | "SP2" | "SP3" | "SP4" | "SP5">>(new Set());
 
   const clearResults = () => {
     setEdges([]);
@@ -76,7 +82,17 @@ export default function App() {
       slots: [...current.slots, slot].sort((a, b) => a.label.localeCompare(b.label)),
       courtSlots: [
         ...current.courtSlots,
-        ...current.courts.flatMap((court) => [{ courtId: court.id, courtName: court.name, slotId: slot.id, slotLabel: slot.label, rentalFee: 250000, available: true }]),
+        ...current.courts.flatMap((court) => [
+          { 
+            courtId: court.id, 
+            courtName: court.name, 
+            slotId: slot.id, 
+            slotLabel: slot.label, 
+            rentalFee: 250000,
+            operatingCost: Math.round(250000 * 0.35),
+            available: true 
+          },
+        ]),
       ],
     }));
     clearResults();
@@ -93,18 +109,31 @@ export default function App() {
     clearResults();
   };
 
-  const runOptimization = () => {
+  const runOptimization = async () => {
+    const steps: Array<"SP1" | "SP2" | "SP3" | "SP4" | "SP5"> = ["SP1", "SP2", "SP3", "SP4", "SP5"];
+    setCompletedSteps(new Set());
+    
+    for (const step of steps) {
+      setCurrentStep(step);
+      await new Promise((resolve) => setTimeout(resolve, 150)); // Animate each step briefly
+    }
+    
     const result = runPipeline(dataset, parameters, true);
     setEdges(result.edges);
     setMatching(result.matching);
     setSchedule(result.schedule);
     setMetrics(result.metrics);
+    
+    setCompletedSteps(new Set(steps));
+    setCurrentStep(null);
   };
 
   return (
     <main className="min-h-screen bg-[#f6f7fb]">
+      <OnboardingBanner />
       <div className="mx-auto grid max-w-[1540px] gap-5 px-4 py-5 sm:px-6 lg:px-8">
         <Header />
+        <PipelineView activeStep={currentStep} completedSteps={completedSteps} />
         <div className="grid gap-5 xl:grid-cols-[minmax(360px,1fr)_minmax(380px,0.85fr)]">
           <InputConfigPanel config={config} setConfig={setConfig} parameters={parameters} setParameters={setParameters} onGenerate={handleGenerate} />
           <ParameterPanel parameters={parameters} setParameters={setParameters} onRun={runOptimization} />

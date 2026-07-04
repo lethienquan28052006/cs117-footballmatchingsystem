@@ -15,6 +15,7 @@ export function FeeInputModal({ isOpen, courts, slots, courtSlots, onClose, onAd
   const [courtId, setCourtId] = useState("");
   const [slotId, setSlotId] = useState("");
   const [rentalFee, setRentalFee] = useState("300000");
+  const [operatingCost, setOperatingCost] = useState("100000");
   const [error, setError] = useState("");
 
   if (!isOpen) return null;
@@ -25,16 +26,20 @@ export function FeeInputModal({ isOpen, courts, slots, courtSlots, onClose, onAd
   const selectedSlot = slots.find((slot) => slot.id === effectiveSlotId);
   const existing = courtSlots.some((courtSlot) => courtSlot.courtId === effectiveCourtId && courtSlot.slotId === effectiveSlotId);
 
+  const parsedRentalFee = Number(rentalFee);
+  const parsedOperatingCost = Number(operatingCost);
+  const netProfit = parsedRentalFee - parsedOperatingCost;
+
   const close = () => {
     setCourtId("");
     setSlotId("");
     setRentalFee("300000");
+    setOperatingCost("100000");
     setError("");
     onClose();
   };
 
   const submit = () => {
-    const parsedRentalFee = Number(rentalFee);
     if (!effectiveCourtId || !effectiveSlotId) {
       setError("A court and time slot are required.");
       return;
@@ -43,12 +48,21 @@ export function FeeInputModal({ isOpen, courts, slots, courtSlots, onClose, onAd
       setError("Rental fee must be a non-negative number.");
       return;
     }
+    if (!Number.isFinite(parsedOperatingCost) || parsedOperatingCost < 0) {
+      setError("Operating cost must be a non-negative number.");
+      return;
+    }
+    if (parsedOperatingCost > parsedRentalFee) {
+      setError("Operating cost cannot exceed rental fee (net profit would be negative).");
+      return;
+    }
     onAddFee({
       courtId: effectiveCourtId,
       courtName: selectedCourt?.name ?? effectiveCourtId,
       slotId: effectiveSlotId,
       slotLabel: selectedSlot?.label ?? effectiveSlotId,
       rentalFee: parsedRentalFee,
+      operatingCost: parsedOperatingCost,
       available: true,
     });
     close();
@@ -59,8 +73,8 @@ export function FeeInputModal({ isOpen, courts, slots, courtSlots, onClose, onAd
       <div className="panel w-full max-w-lg overflow-hidden">
         <div className="flex items-center justify-between border-b border-blue-100 p-4">
           <div>
-            <h2 className="text-lg font-bold text-blue-950">Add Fee</h2>
-            <p className="text-sm text-slate-500">Existing court-slot fees are replaced.</p>
+            <h2 className="text-lg font-bold text-blue-950">Add Court-Slot Fee</h2>
+            <p className="text-sm text-slate-500">Set rental and operating costs for net profit.</p>
           </div>
           <button className="rounded-lg p-1 hover:bg-blue-50" onClick={close} aria-label="Close">
             <X size={22} />
@@ -90,11 +104,44 @@ export function FeeInputModal({ isOpen, courts, slots, courtSlots, onClose, onAd
                 ))}
               </select>
             </label>
-            <label className="grid gap-2 sm:col-span-2">
-              <span className="text-sm font-semibold text-slate-700">Rental Fee</span>
-              <input className="rounded-lg border border-blue-200 px-3 py-2" type="number" min="0" step="10000" value={rentalFee} onChange={(event) => setRentalFee(event.target.value)} />
+            
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-slate-700">Rental Fee (VND)</span>
+              <input 
+                className="rounded-lg border border-blue-200 px-3 py-2" 
+                type="number" 
+                min="0" 
+                step="10000" 
+                value={rentalFee} 
+                onChange={(event) => setRentalFee(event.target.value)} 
+              />
+            </label>
+            
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-slate-700">Operating Cost (VND)</span>
+              <input 
+                className="rounded-lg border border-blue-200 px-3 py-2" 
+                type="number" 
+                min="0" 
+                step="10000" 
+                value={operatingCost} 
+                onChange={(event) => setOperatingCost(event.target.value)} 
+              />
             </label>
           </div>
+
+          <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-xs font-bold uppercase text-blue-900">Net Profit</span>
+              <span className={`text-lg font-black ${netProfit >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+                {(netProfit / 1000).toFixed(0)}k
+              </span>
+            </div>
+            <div className="mt-1 text-xs text-blue-800">
+              = Rental ({(parsedRentalFee / 1000).toFixed(0)}k) − Operating ({(parsedOperatingCost / 1000).toFixed(0)}k)
+            </div>
+          </div>
+
           <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-800 px-4 py-3 font-black text-white hover:bg-blue-900" onClick={submit}>
             <Plus size={18} /> {existing ? "Update Fee" : "Add Fee"}
           </button>
