@@ -1,15 +1,17 @@
-import { BadgeDollarSign, MapPinned, UserPlus } from "lucide-react";
+import { BadgeDollarSign, Clock3, MapPinned, UserPlus } from "lucide-react";
 
 type Props = {
   onAddTeam: () => void;
   onAddCourt: () => void;
+  onAddSlot: () => void;
   onAddFee: () => void;
 };
 
-export function ManualDataPanel({ onAddTeam, onAddCourt, onAddFee }: Props) {
+export function ManualDataPanel({ onAddTeam, onAddCourt, onAddSlot, onAddFee }: Props) {
   const actions = [
     { label: "Add Team", icon: UserPlus, onClick: onAddTeam },
     { label: "Add Court", icon: MapPinned, onClick: onAddCourt },
+    { label: "Add Slot", icon: Clock3, onClick: onAddSlot },
     { label: "Add Fee", icon: BadgeDollarSign, onClick: onAddFee },
   ];
 
@@ -20,7 +22,7 @@ export function ManualDataPanel({ onAddTeam, onAddCourt, onAddFee }: Props) {
           <h2 className="text-lg font-bold text-blue-950">Manual Data Entry</h2>
           <p className="text-sm text-slate-500">Add teams, courts, or court-slot fees to the active dataset.</p>
         </div>
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           {actions.map((action) => {
             const Icon = action.icon;
             return (

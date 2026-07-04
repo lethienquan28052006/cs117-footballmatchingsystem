@@ -12,9 +12,10 @@ import { ManualDataPanel } from "./components/ManualDataPanel";
 import { MetricsCards } from "./components/MetricsCards";
 import { ParameterPanel } from "./components/ParameterPanel";
 import { ScheduleTable } from "./components/ScheduleTable";
+import { SlotInputModal } from "./components/SlotInputModal";
 import { TeamInputModal } from "./components/TeamInputModal";
 import { TeamTable } from "./components/TeamTable";
-import type { Court, CourtSlot, Dataset, Edge, InputConfig, Metrics, Parameters, ScheduledMatch, Team } from "./types";
+import type { Court, CourtSlot, Dataset, Edge, InputConfig, Metrics, Parameters, ScheduledMatch, Team, TimeSlot } from "./types";
 
 const defaultParameters: Parameters = {
   lambda: 0.36,
@@ -39,6 +40,7 @@ export default function App() {
   const [metrics, setMetrics] = useState<Metrics>();
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [isCourtModalOpen, setIsCourtModalOpen] = useState(false);
+  const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
   const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
 
   const clearResults = () => {
@@ -65,6 +67,18 @@ export default function App() {
 
   const handleAddCourt = (court: Court) => {
     setDataset((current) => ({ ...current, courts: [...current.courts, court] }));
+    clearResults();
+  };
+
+  const handleAddSlot = (slot: TimeSlot) => {
+    setDataset((current) => ({
+      ...current,
+      slots: [...current.slots, slot].sort((a, b) => a.label.localeCompare(b.label)),
+      courtSlots: [
+        ...current.courtSlots,
+        ...current.courts.flatMap((court) => [{ courtId: court.id, courtName: court.name, slotId: slot.id, slotLabel: slot.label, rentalFee: 250000, available: true }]),
+      ],
+    }));
     clearResults();
   };
 
@@ -95,7 +109,7 @@ export default function App() {
           <InputConfigPanel config={config} setConfig={setConfig} parameters={parameters} setParameters={setParameters} onGenerate={handleGenerate} />
           <ParameterPanel parameters={parameters} setParameters={setParameters} onRun={runOptimization} />
         </div>
-        <ManualDataPanel onAddTeam={() => setIsTeamModalOpen(true)} onAddCourt={() => setIsCourtModalOpen(true)} onAddFee={() => setIsFeeModalOpen(true)} />
+        <ManualDataPanel onAddTeam={() => setIsTeamModalOpen(true)} onAddCourt={() => setIsCourtModalOpen(true)} onAddSlot={() => setIsSlotModalOpen(true)} onAddFee={() => setIsFeeModalOpen(true)} />
         <MetricsCards metrics={metrics} />
         <TeamTable teams={dataset.teams} courts={dataset.courts} slots={dataset.slots} />
         <div className="grid gap-5 2xl:grid-cols-[520px_minmax(0,1fr)]">
@@ -114,6 +128,7 @@ export default function App() {
         onAddTeams={handleAddTeams}
       />
       <CourtInputModal isOpen={isCourtModalOpen} existingCourtIds={dataset.courts.map((court) => court.id)} onClose={() => setIsCourtModalOpen(false)} onAddCourt={handleAddCourt} />
+      <SlotInputModal isOpen={isSlotModalOpen} existingSlotIds={dataset.slots.map((slot) => slot.id)} onClose={() => setIsSlotModalOpen(false)} onAddSlot={handleAddSlot} />
       <FeeInputModal isOpen={isFeeModalOpen} courts={dataset.courts} slots={dataset.slots} courtSlots={dataset.courtSlots} onClose={() => setIsFeeModalOpen(false)} onAddFee={handleAddFee} />
     </main>
   );

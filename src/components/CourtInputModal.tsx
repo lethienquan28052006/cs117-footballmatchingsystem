@@ -11,30 +11,27 @@ type Props = {
 
 export function CourtInputModal({ isOpen, existingCourtIds, onClose, onAddCourt }: Props) {
   const [id, setId] = useState("");
-  const [name, setName] = useState("");
   const [error, setError] = useState("");
 
   if (!isOpen) return null;
 
   const close = () => {
     setId("");
-    setName("");
     setError("");
     onClose();
   };
 
   const submit = () => {
     const trimmedId = id.trim();
-    const trimmedName = name.trim();
-    if (!trimmedId || !trimmedName) {
-      setError("Court ID and name are required.");
+    if (!trimmedId) {
+      setError("Court ID is required.");
       return;
     }
     if (existingCourtIds.includes(trimmedId)) {
       setError("Court ID already exists.");
       return;
     }
-    onAddCourt({ id: trimmedId, name: trimmedName });
+    onAddCourt({ id: trimmedId, name: trimmedId });
     close();
   };
 
@@ -52,10 +49,6 @@ export function CourtInputModal({ isOpen, existingCourtIds, onClose, onAddCourt 
           <label className="grid gap-2">
             <span className="text-sm font-semibold text-slate-700">Court ID</span>
             <input className="rounded-lg border border-blue-200 px-3 py-2" value={id} onChange={(event) => setId(event.target.value)} placeholder="C6" />
-          </label>
-          <label className="grid gap-2">
-            <span className="text-sm font-semibold text-slate-700">Court Name</span>
-            <input className="rounded-lg border border-blue-200 px-3 py-2" value={name} onChange={(event) => setName(event.target.value)} placeholder="Court 6" />
           </label>
           <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-800 px-4 py-3 font-black text-white hover:bg-blue-900" onClick={submit}>
             <Plus size={18} /> Add Court
